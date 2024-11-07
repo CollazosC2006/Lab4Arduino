@@ -1,12 +1,9 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 from pymongo import MongoClient
-from process_huella import process_huella
 import secrets
 from datetime import datetime
 from bson import Int32
-import json
-
 app = FastAPI()
 
 # Conexion a base de datos MongoDB
