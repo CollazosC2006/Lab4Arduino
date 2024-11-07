@@ -64,7 +64,7 @@ String fingerprintToHexString(uint8_t *data, size_t length) {
 void sendFingerprintTemplate(uint8_t* fingerprintData) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    String serverUrl = "http://192.168.6.27:8000/autenticar_huella";
+    String serverUrl = "http://192.168.67.131:8000/autenticar_huella";
 
     Serial.println("Convirtiendo template de huella a cadena hexadecimal...");
     String fingerprintHex = fingerprintToHexString(fingerTemplate, 512);

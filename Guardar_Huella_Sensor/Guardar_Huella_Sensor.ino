@@ -34,6 +34,10 @@ void setup()
   Serial.print(F("Device address: ")); Serial.println(finger.device_addr, HEX);
   Serial.print(F("Packet len: ")); Serial.println(finger.packet_len);
   Serial.print(F("Baud rate: ")); Serial.println(finger.baud_rate);
+
+
+
+  
 }
 
 uint8_t readnumber(void) {

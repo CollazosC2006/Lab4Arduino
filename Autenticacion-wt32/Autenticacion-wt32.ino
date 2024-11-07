@@ -115,7 +115,7 @@ void sendFingerprintTemplate(uint8_t* fingerprintData) {
     String payload = "fingerprint=" + fingerprintHex ;
 
     //http.begin(serverUrl);
-    http.begin("http://192.168.10.14:8000/verificar_credenciales/");
+    http.begin("http://192.168.128.32:8000/verificar_credenciales/");
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
     Serial.println("Enviando solicitud POST al servidor...");

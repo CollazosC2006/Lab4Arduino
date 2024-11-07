@@ -169,13 +169,9 @@ uint8_t getFingerprintEnroll() {
       Serial.println("Unknown error");
       finger.LEDcontrol(FINGERPRINT_LED_FLASHING, 25, FINGERPRINT_LED_RED, 10);
       delay(2000);
-      return p;
+      return false;
   }
-
-  Serial.println("Remove finger");
   delay(10);
-  
-  
   
   Serial.print("ID "); Serial.println(id);
   p = -1;
@@ -204,7 +200,7 @@ uint8_t getFingerprintEnroll() {
       Serial.println("Unknown error");
       finger.LEDcontrol(FINGERPRINT_LED_FLASHING, 25, FINGERPRINT_LED_RED, 10);
       delay(2000);
-      return p;
+      return false;
   }
 
   Serial.print("Creating model for #");  Serial.println(id);
@@ -216,7 +212,7 @@ uint8_t getFingerprintEnroll() {
     Serial.println("Unknown error");
     finger.LEDcontrol(FINGERPRINT_LED_FLASHING, 25, FINGERPRINT_LED_RED, 10);
     delay(2000);
-    return p;
+    return false;
   }
 
   p = finger.storeModel(id);
@@ -226,7 +222,7 @@ uint8_t getFingerprintEnroll() {
     Serial.println("Unknown error");
     finger.LEDcontrol(FINGERPRINT_LED_FLASHING, 25, FINGERPRINT_LED_RED, 10);
     delay(2000);
-    return p;
+    return false;
   }
 
   return true;
@@ -235,14 +231,7 @@ uint8_t getFingerprintEnroll() {
 
 
 
-String fingerprintToHexString(uint8_t *data, size_t length) {
-  String hexString = "";
-  for (size_t i = 0; i < length; i++) {
-    if (data[i] < 16) hexString += "0";
-    hexString += String(data[i], HEX);
-  }
-  return hexString;
-}
+
 
 
 // Manejar la solicitud POST que llega a "/receive"
@@ -256,27 +245,10 @@ void handlePostRequest() {
 
     String jsonToSend = "{\"templates\":{";
     jsonToSend += "\"cedula\":\"" + cedula + "\",";  // Incluir la cédula como un template
-
-    int n_temp= 1;
+    jsonToSend += "\"id\":\"" + id + "\",";
     for(int i=0; i<3; i++){
       finger.LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_PURPLE);
-      for(int j=0;j<3;j++){
         while (! getFingerprintEnroll() );
-        if(downloadFingerprintTemplate(id)){
-          //send fingerprint
-          String fingerprintHex = fingerprintToHexString(fingerTemplate, 512);
-          if(n_temp==9){
-            jsonToSend += "\"template"+String(n_temp)+"\":\""+ fingerprintHex +"\"}}";
-          }else{
-            jsonToSend += "\"template"+String(n_temp)+"\":\""+ fingerprintHex +"\",";
-          }
-          
-        }
-        n_temp++;
-      }
-
-      
-      
       delay(100);
       int p = 0;
       while (p != FINGERPRINT_NOFINGER) {
@@ -339,3 +311,5 @@ bool forwardPostToBackend(String payload) {
     return false;
   }
 }
+
+
