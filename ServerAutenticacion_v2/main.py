@@ -45,7 +45,7 @@ async def verificar_acceso(
     background_tasks: BackgroundTasks,  # Tareas en segundo plano (Crear registro de acceso)
     data: AccessData
 ):
-    # Identificar porteria con MAC
+   # Identificar porteria con MAC
     porteria = collection_porterias.find_one({"mac":data.mac})
     if porteria:
         # Convertir el _id de la portería a int32
