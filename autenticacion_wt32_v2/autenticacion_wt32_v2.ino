@@ -8,7 +8,7 @@ HardwareSerial mySerial(2);  // Serial2 en ESP32 (pines IO17 para TX y IO16 para
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 uint8_t fingerTemplate[512]; // Template de la huella
-String backendServerURL = "http://tu_servidor_backend.com/endpoint";  // Cambia a la URL de tu backend
+String backendServerURL = "http://192.168.10.20:8000/verificar_acceso/";  // Cambia a la URL de tu backend
 
 void setup() {
   Serial.begin(9600);
