@@ -16,5 +16,6 @@ async def verificar_acceso(data: AccessData):
     print(data)
     if data.access == "1":
         return {"message": "Acceso concedido"}  # Respuesta 200 OK por defecto en FastAPI
+    
     else:
         raise HTTPException(status_code=403, detail="Acceso denegado")  # Retorna 403 Forbidden
