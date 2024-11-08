@@ -43,6 +43,7 @@ async def verificar_acceso(
     background_tasks: BackgroundTasks,  # Tareas en segundo plano (Crear registro de acceso)
     data: AccessData
 ):
+    
     # Identificar porteria con MAC
     porteria = collection_porterias.find_one({"mac":data.mac})
     if porteria:
@@ -55,21 +56,19 @@ async def verificar_acceso(
     # Verificar el valor de "access" en el JSON
     print(data)
     if data.access == "1":
+        inc = int(data.id)
         # Registrar acceso exitoso en la base de datos
         # Obtener cedula autenticada
         usuario_auth = collection_usuarios.find_one({"in":inc})
-        cedula_auth = usuario_auth["_id"]
+        cedula_auth = str(usuario_auth["_id"]) 
+        print(cedula_auth)
         background_tasks.add_task(registrar_acceso, cedula_auth, porteria_id, True)
-        # Imprimir información del usuario
-        print("Usuario autenticado : " + usuario_auth["nombre"])
-
         return {"message": "Acceso concedido"}  # Respuesta 200 OK por defecto en FastAPI
     
     else:
         # Registrar acceso fallido
         background_tasks.add_task(registrar_acceso, None, porteria_id, False)
         raise HTTPException(status_code=403, detail="Acceso denegado")  # Retorna 403 Forbidden
-
 
 # Funciones
 # Función asíncrona para registrar el acceso

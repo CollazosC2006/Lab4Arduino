@@ -2,10 +2,11 @@
 #include <HTTPClient.h>      // Para hacer solicitudes HTTP
 #include <WebServer.h>       // Para ejecutar el servidor web en el ESP
 #include <Adafruit_Fingerprint.h>
+#include <ArduinoJson.h>     // Librería para manejar JSON (asegúrate de tenerla instalada)
 
 // Configura tu red Wi-Fi
-const char* ssid = "X3 pro";      // Reemplaza con el nombre de tu red Wi-Fi
-const char* password = "a1234567"; // Reemplaza con la contraseña de tu red Wi-Fi
+const char* ssid = "COLZAM";      // Reemplaza con el nombre de tu red Wi-Fi
+const char* password = "CDSD2031"; // Reemplaza con la contraseña de tu red Wi-Fi
 //WT32 ETH01
 /*
 const int RX_sensor=5;
@@ -17,7 +18,7 @@ const int TX_sensor=17;
 
 
 // Dirección del servidor backend Java (donde reenviarás los datos)
-const char* backendServerURL = "http://192.168.224.219:8000/verificar_credenciales"; 
+const char* backendServerURL = "http://192.168.10.20:8000/registrar_usuario/"; 
 //const char* backendServerURL = "http://192.168.224.85:8081/huella"; 
 //***************SENSOR**************
 
@@ -237,15 +238,38 @@ uint8_t getFingerprintEnroll() {
 // Manejar la solicitud POST que llega a "/receive"
 void handlePostRequest() {
   if (server.hasArg("plain")) {
+
+    String requestBody = server.arg("plain");
+    Serial.println("Cuerpo de la solicitud POST:");
+    Serial.println(requestBody); // Imprime el cuerpo recibido
+
+    // Parsear JSON recibido
+    DynamicJsonDocument doc(1024);
+    DeserializationError error = deserializeJson(doc, server.arg("plain"));
     
-    String cedula = server.arg("plain");  // Obtener el cuerpo de la solicitud POST como cédula
+     if (error) {
+      Serial.print("Error de parseo JSON: ");
+      Serial.println(error.c_str());
+      server.send(400, "application/json", "{\"error\":\"Error en el JSON recibido\"}");
+      return;
+    }
+
+
+     // Obtener los valores de "cedula" e "in"
+    String cedula = doc["cedula"].as<String>();
+    id = doc["in"].as<int>();
+
     Serial.println("Cédula recibida:");
-    Serial.println(cedula); // Imprimir la cédula recibida
+    Serial.println(cedula);
+    Serial.println("Valor de 'in' recibido:");
+    Serial.println(id);
+
+      // Crear JSON a enviar
+
+    String jsonToSend = "{\"cedula\":\"" + cedula + "\",";
+    jsonToSend += "\"id\":\"" + String(id) + "\"}";
 
 
-    String jsonToSend = "{\"templates\":{";
-    jsonToSend += "\"cedula\":\"" + cedula + "\",";  // Incluir la cédula como un template
-    jsonToSend += "\"id\":\"" + id + "\",";
     for(int i=0; i<3; i++){
       finger.LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_PURPLE);
         while (! getFingerprintEnroll() );
@@ -256,9 +280,9 @@ void handlePostRequest() {
         p = finger.getImage();
         delay(10);
       }
-       
+
     }
-    n_temp=1;
+    
 
     Serial.print("JSON a enviar: ");
     Serial.println(jsonToSend);
@@ -273,6 +297,7 @@ void handlePostRequest() {
 
   } else {
     // Enviar un error si no hay payload
+    
     server.send(400, "application/json", "{\"error\":\"No se encontró el cuerpo de la solicitud\"}");
   }
 }
@@ -288,6 +313,7 @@ bool forwardPostToBackend(String payload) {
 
     // Enviar la solicitud POST con el JSON recibido
     int httpResponseCode = http.POST(payload);
+
 
     // Verificar la respuesta del servidor
     if (httpResponseCode == 200) {

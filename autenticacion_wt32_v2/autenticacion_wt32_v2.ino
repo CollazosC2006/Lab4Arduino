@@ -56,6 +56,9 @@ void setup() {
     delay(500);
   }
   finger.getParameters();
+  Serial.println(ETH.localIP());
+  Serial.println(ETH.localIP());
+  Serial.println(ETH.localIP());
 
 }
 
@@ -76,7 +79,7 @@ bool getFingerprintID() {
       Serial.println("Imagen de huella tomada");
       finger.LEDcontrol(FINGERPRINT_LED_ON, 0, FINGERPRINT_LED_PURPLE);
     } else if (p == FINGERPRINT_NOFINGER) {
-      Serial.println(".");
+      Serial.print(".");
     } else {
       Serial.println("Error desconocido");
       return false;
@@ -90,15 +93,17 @@ bool getFingerprintID() {
   }
 
   p = finger.fingerSearch();
-  String macAddress = WiFi.macAddress();  // Obtener la MAC
+  String macAddress = "AA:C7:69:E4:12:9B";  // Obtener la MAC
   String jsonToSend;
   
   if (p == FINGERPRINT_OK) {
     Serial.println("Huella coincidente encontrada");
-    jsonToSend = "{\"access\":{\"id\":\"" + String(finger.fingerID) + "\",\"access\":\"1\",\"mac\":\"" + macAddress + "\"}}";
+    jsonToSend = "{\"id\":\"" + String(finger.fingerID) + "\",\"access\":\"1\",\"mac\":\"" + macAddress + "\"}";
+    Serial.println(jsonToSend);
   } else if (p == FINGERPRINT_NOTFOUND) {
     Serial.println("No se encontró coincidencia de huella");
-    jsonToSend = "{\"access\":{\"id\":\"" + String(finger.fingerID) + "\",\"access\":\"0\",\"mac\":\"" + macAddress + "\"}}";
+    jsonToSend = "{\"id\":\"" + String(99999) + "\",\"access\":\"0\",\"mac\":\"" + macAddress + "\"}";
+    Serial.println(jsonToSend);
   } else {
     Serial.println("Error desconocido en la búsqueda de huella");
     return false;
@@ -109,7 +114,7 @@ bool getFingerprintID() {
 
 // Función para enviar el JSON al backend
 bool forwardPostToBackend(String payload) {
-  if (WiFi.status() == WL_CONNECTED) {
+  if (ETH.linkUp()) {
     HTTPClient http;
     http.begin(backendServerURL);
     http.addHeader("Content-Type", "application/json");
