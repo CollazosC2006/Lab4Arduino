@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 import secrets
 from datetime import datetime
+import pytz
 app = FastAPI()
 
 # Conexion a base de datos MongoDB
@@ -22,14 +23,13 @@ class TemplateData (BaseModel):
 async def registrar_usuario(data: TemplateData):
     cedula = data.cedula
     huella_vector = process_huella()
-    print(huella_vector)
     # Guardar huella en la base de datos
     registro = {
         "_id": cedula,
         "templates":huella_vector,  # Guardamos los vectores directamente
     }
     collection_huellas.insert_one(registro)
-    return {"message": "Registro Exitoso"} # Respuesta de 200 OK
+    return {"message": "Registro Exitoso: CC: "+cedula} # Respuesta de 200 OK
 
 # ------------ AUTENTICACION ---------------
 # Modelo para la estructura del JSON recibido
@@ -43,8 +43,6 @@ async def verificar_acceso(
     background_tasks: BackgroundTasks,  # Tareas en segundo plano (Crear registro de acceso)
     data: AccessData
 ):
-    # Asociar cedula a id
-    inc = int(data.id)
     # Identificar porteria con MAC
     porteria = collection_porterias.find_one({"mac":data.mac})
     if porteria:
@@ -60,12 +58,13 @@ async def verificar_acceso(
     if data.access == "1":
         # Registrar acceso exitoso en la base de datos
         # Obtener cedula autenticada
+        # Asociar cedula a id
+        inc = int(data.id)
         usuario_auth = collection_usuarios.find_one({"in":inc})
         cedula_auth = usuario_auth["_id"]
         background_tasks.add_task(registrar_acceso, cedula_auth, porteria_id, True)
         # Imprimir información del usuario
         print("Usuario autenticado : " + usuario_auth["nombre"])
-
         return {"message": "Acceso concedido"}  # Respuesta 200 OK por defecto en FastAPI
     else:
         # Registrar acceso fallido
@@ -76,9 +75,13 @@ async def verificar_acceso(
 
 # Funciones
 # Función asíncrona para registrar el acceso
+now=datetime.now(pytz.timezone('America/Bogota'))
+Formatted_time = now.strftime('%a %b %d %H:%M:%S COT %Y')
+print(Formatted_time)
 async def registrar_acceso(cedula, porteria, autenticado):
     # Fecha y hora actual
-    fecha_acceso = datetime.now()
+    fecha_acceso_form = datetime.now(pytz.timezone('America/Bogota'))
+    fecha_acceso = fecha_acceso_form.strftime('%a %b %d %H:%M:%S COT %Y')
     # Si la autenticación falló, la cédula es None
     if not autenticado:
         cedula = None
