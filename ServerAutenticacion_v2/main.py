@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 import secrets
 from datetime import datetime
-from bson import Int32
 app = FastAPI()
 
 # Conexion a base de datos MongoDB
@@ -22,7 +21,6 @@ class TemplateData (BaseModel):
 @app.post("/registrar_usuario/")
 async def registrar_usuario(data: TemplateData):
     cedula = data.cedula
-    id_registro = data.id
     huella_vector = process_huella()
     print(huella_vector)
     # Guardar huella en la base de datos
@@ -45,12 +43,15 @@ async def verificar_acceso(
     background_tasks: BackgroundTasks,  # Tareas en segundo plano (Crear registro de acceso)
     data: AccessData
 ):
+    # Asociar cedula a id
+    inc = int(data.id)
     # Identificar porteria con MAC
     porteria = collection_porterias.find_one({"mac":data.mac})
     if porteria:
         # Convertir el _id de la portería a int32
-        porteria_id = Int32(porteria["_id"]) 
+        porteria_id = int(porteria["_id"]) 
     else:
+        print("Porteria no encontrada")
         # Si no se encuentra la mac asociada a la porteria
         raise HTTPException(status_code=403, detail="Punto de acceso (porteria) no encontrada")  # Retorna 403 Forbidden
 
@@ -58,19 +59,19 @@ async def verificar_acceso(
     print(data)
     if data.access == "1":
         # Registrar acceso exitoso en la base de datos
-        background_tasks.add_task(registrar_acceso, data.id, porteria_id, True)
+        # Obtener cedula autenticada
+        usuario_auth = collection_usuarios.find_one({"in":inc})
+        cedula_auth = usuario_auth["_id"]
+        background_tasks.add_task(registrar_acceso, cedula_auth, porteria_id, True)
         # Imprimir información del usuario
-        usuario_auth = collection_usuarios.find_one({"_id":data.id})
         print("Usuario autenticado : " + usuario_auth["nombre"])
 
         return {"message": "Acceso concedido"}  # Respuesta 200 OK por defecto en FastAPI
     else:
         # Registrar acceso fallido
+        print("Acceso denegado")
         background_tasks.add_task(registrar_acceso, None, porteria_id, False)
         raise HTTPException(status_code=403, detail="Acceso denegado")  # Retorna 403 Forbidden
-
-
-
 
 
 # Funciones
@@ -93,8 +94,26 @@ async def registrar_acceso(cedula, porteria, autenticado):
 
 # Funcion para procesar huella
 def process_huella():
-    # Generar 512 bytes aleatorios
-    random_bytes = secrets.token_bytes(512)
-    # Convertir a cadena hexadecimal
-    hex_string = random_bytes.hex()
-    return hex_string
+    # Generar el primer template aleatorio de 512 bytes
+    base_bytes = bytearray(secrets.token_bytes(512))
+    
+    # Crear variaciones para los otros dos templates
+    template1 = base_bytes.hex()
+    
+    # Hacer una copia y modificar ligeramente algunos bytes
+    template2_bytes = bytearray(base_bytes)
+    for i in range(5):  # Modificar 5 bytes en posiciones aleatorias
+        pos = secrets.randbelow(len(template2_bytes))
+        template2_bytes[pos] ^= secrets.randbelow(256)  # XOR aleatorio con un valor de 0 a 255
+    
+    template2 = template2_bytes.hex()
+    
+    # Crear una tercera variación
+    template3_bytes = bytearray(base_bytes)
+    for i in range(5):  # Modificar 5 bytes en posiciones aleatorias
+        pos = secrets.randbelow(len(template3_bytes))
+        template3_bytes[pos] ^= secrets.randbelow(256)  # XOR aleatorio con un valor de 0 a 255
+    
+    template3 = template3_bytes.hex()
+    
+    return [template1, template2, template3]
