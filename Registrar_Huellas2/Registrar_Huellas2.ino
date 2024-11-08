@@ -5,8 +5,8 @@
 #include <ArduinoJson.h>     // Librería para manejar JSON (asegúrate de tenerla instalada)
 
 // Configura tu red Wi-Fi
-const char* ssid = "COLZAM";      // Reemplaza con el nombre de tu red Wi-Fi
-const char* password = "CDSD2031"; // Reemplaza con la contraseña de tu red Wi-Fi
+const char* ssid = "X3 pro";      // Reemplaza con el nombre de tu red Wi-Fi
+const char* password = "a1234567"; // Reemplaza con la contraseña de tu red Wi-Fi
 //WT32 ETH01
 /*
 const int RX_sensor=5;
@@ -18,7 +18,7 @@ const int TX_sensor=17;
 
 
 // Dirección del servidor backend Java (donde reenviarás los datos)
-const char* backendServerURL = "http://192.168.10.20:8000/registrar_usuario/"; 
+const char* backendServerURL = "http://192.168.120.131:8000/registrar_usuario/"; 
 //const char* backendServerURL = "http://192.168.224.85:8081/huella"; 
 //***************SENSOR**************
 
@@ -67,6 +67,8 @@ void setup() {
     Serial.println("Did not find fingerprint sensor :("); 
     delay(500); 
   }
+      Serial.println("Find fingerprint sensor :)"); 
+
 }
 
 void loop() {

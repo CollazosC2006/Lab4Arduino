@@ -61,6 +61,7 @@ async def verificar_acceso(
         # Obtener cedula autenticada
         usuario_auth = collection_usuarios.find_one({"in":inc})
         cedula_auth = str(usuario_auth["_id"]) 
+        print("Usuario autenticado: " + usuario_auth["nombre"])
         print(cedula_auth)
         background_tasks.add_task(registrar_acceso, cedula_auth, porteria_id, True)
         return {"message": "Acceso concedido"}  # Respuesta 200 OK por defecto en FastAPI
