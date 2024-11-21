@@ -1,9 +1,14 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from pymongo import MongoClient
 import secrets
 from datetime import datetime
-import pytz
+import pytz 
+import os
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from base64 import b64encode
+
 app = FastAPI()
 
 # Conexion a base de datos MongoDB
@@ -14,22 +19,71 @@ collection_accesos = db["acceso"]
 collection_porterias = db["porteria"]
 collection_usuarios = db["usuario"]
 # ------------ REGISTRO --------------------
+# Clave y vector de inicialización para AES
+CLAVE_AES = os.urandom(32)  # Genera una clave de 256 bits
+IV = os.urandom(16)         # Genera un IV de 128 bits
+
+# ------------ REGISTRO --------------------
 # Modelo estructura de registro
-class TemplateData (BaseModel):
+class TemplateData(BaseModel):
     cedula: str
     id: str
+
+def cifrar_datos(data, clave, iv):
+    """Cifra los datos usando AES en modo CBC."""
+    # Aplicar padding para manejar datos que no sean múltiplos del bloque
+    padder = padding.PKCS7(128).padder()
+    data_padded = padder.update(data) + padder.finalize()
+
+    # Cifrar datos
+    cipher = Cipher(algorithms.AES(clave), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    return encryptor.update(data_padded) + encryptor.finalize()
+
+def process_huella():
+    """Genera tres templates de huella."""
+    base_bytes = bytearray(secrets.token_bytes(512))
+    
+    # Crear variaciones para los otros dos templates
+    template1 = base_bytes.hex()
+    
+    # Hacer una copia y modificar ligeramente algunos bytes
+    template2_bytes = bytearray(base_bytes)
+    for i in range(5):  # Modificar 5 bytes en posiciones aleatorias
+        pos = secrets.randbelow(len(template2_bytes))
+        template2_bytes[pos] ^= secrets.randbelow(256)
+    
+    template2 = template2_bytes.hex()
+    
+    # Crear una tercera variación
+    template3_bytes = bytearray(base_bytes)
+    for i in range(5):  # Modificar 5 bytes en posiciones aleatorias
+        pos = secrets.randbelow(len(template3_bytes))
+        template3_bytes[pos] ^= secrets.randbelow(256)
+    
+    template3 = template3_bytes.hex()
+    
+    return [template1, template2, template3]
 
 @app.post("/registrar_usuario/")
 async def registrar_usuario(data: TemplateData):
     cedula = data.cedula
     huella_vector = process_huella()
-    # Guardar huella en la base de datos
+    
+    # Cifrar cada template antes de almacenarlo
+    templates_cifrados = []
+    for template in huella_vector:
+        template_bytes = bytes.fromhex(template)  # Convertir a bytes
+        encrypted = cifrar_datos(template_bytes, CLAVE_AES, IV)
+        templates_cifrados.append(b64encode(encrypted).decode('utf-8'))  # Codificar en base64
+    # Guardar en la base de datos
     registro = {
         "_id": cedula,
-        "templates":huella_vector,  # Guardamos los vectores directamente
+        "templates": templates_cifrados,
+        "iv": b64encode(IV).decode('utf-8')  # Guardar IV para descifrar posteriormente
     }
     collection_huellas.insert_one(registro)
-    return {"message": "Registro Exitoso: CC: "+cedula} # Respuesta de 200 OK
+    return {"message": f"Registro Exitoso: CC: {cedula}"}
 
 # ------------ AUTENTICACION ---------------
 # Modelo para la estructura del JSON recibido
