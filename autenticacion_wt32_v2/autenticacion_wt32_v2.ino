@@ -2,6 +2,7 @@
 #include <WiFi.h>        // Biblioteca para WiFi en 
 #include <ETH.h>   // Biblioteca para Ethernet en ESP32
 
+
 #include <HTTPClient.h>  // Biblioteca para hacer solicitudes HTTP
 #include <ArduinoJson.h> // Biblioteca para manejar JSON
 
@@ -18,7 +19,7 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 #define ETH_CLK_MODE    ETH_CLOCK_GPIO0_IN 
 
 uint8_t fingerTemplate[512]; // Template de la huella
-String backendServerURL = "http://192.168.128.46:8000/verificar_acceso/";  // Cambia a la URL de tu backend
+String backendServerURL = "http://192.168.10.34:8000/verificar_acceso/";  // Cambia a la URL de tu backend
 
 void WiFiEvent(arduino_event_id_t event) {
   switch (event) {
@@ -70,6 +71,8 @@ void loop() {
   }
   delay(1000);  // Espera para evitar múltiples lecturas seguidas
 }
+
+
 
 bool getFingerprintID() {
   uint8_t p = -1;

@@ -5,8 +5,11 @@
 #include <ArduinoJson.h>     // Librería para manejar JSON (asegúrate de tenerla instalada)
 
 // Configura tu red Wi-Fi
-const char* ssid = "X3 pro";      // Reemplaza con el nombre de tu red Wi-Fi
-const char* password = "a1234567"; // Reemplaza con la contraseña de tu red Wi-Fi
+//const char* ssid = "X3 pro";      // Reemplaza con el nombre de tu red Wi-Fi
+//const char* password = "a1234567"; // Reemplaza con la contraseña de tu red Wi-Fi
+const char* ssid = "redmi123";      // Reemplaza con el nombre de tu red Wi-Fi
+const char* password = "redmi123"; // Reemplaza con la contraseña de tu red Wi-Fi
+
 //WT32 ETH01
 /*
 const int RX_sensor=5;
@@ -18,7 +21,8 @@ const int TX_sensor=17;
 
 
 // Dirección del servidor backend Java (donde reenviarás los datos)
-const char* backendServerURL = "http://192.168.120.131:8000/registrar_usuario/"; 
+//const char* backendServerURL = "http://192.168.94.131:8000/registrar_usuario/";
+const char* backendServerURL = "http://192.168.234.131:8000/registrar_usuario/"; 
 //const char* backendServerURL = "http://192.168.224.85:8081/huella"; 
 //***************SENSOR**************
 
@@ -190,7 +194,7 @@ uint8_t getFingerprintEnroll() {
       Serial.println("Unknown error");
       finger.LEDcontrol(FINGERPRINT_LED_FLASHING, 25, FINGERPRINT_LED_RED, 10);
       delay(2000);
-      break;
+      return false;
     }
   }
 
