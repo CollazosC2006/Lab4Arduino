@@ -5,6 +5,7 @@ import secrets
 from datetime import datetime
 import pytz 
 import os
+import random
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from base64 import b64encode
@@ -106,6 +107,17 @@ async def verificar_acceso(
         print("Porteria no encontrada")
         # Si no se encuentra la mac asociada a la porteria
         raise HTTPException(status_code=403, detail="Punto de acceso (porteria) no encontrada")  # Retorna 403 Forbidden
+
+    # Probabilidad de un error 
+    probabilidad_error = 0.2  
+    # Función para determinar si se debe inducir un error
+    def inducir_error(probabilidad):
+        return random.random() < probabilidad
+    # Inducir un error en el valor de "access" según la probabilidad
+    if inducir_error(probabilidad_error):
+        print("¡Error inducido en el valor de access!")
+        data.access = "0" if data.access == "1" else "1"
+
 
     # Verificar el valor de "access" en el JSON
     print(data)
